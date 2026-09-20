@@ -55,4 +55,12 @@ jobs:
         run: php artisan migrate --force
 
       - name: Run tests
+        env:
+          DB_CONNECTION: pgsql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 5432
+          DB_DATABASE: leadscaptain
+          DB_USERNAME: leadscaptain
+          DB_PASSWORD: leadscaptain_secret
+          QUEUE_CONNECTION: database
         run: php artisan test

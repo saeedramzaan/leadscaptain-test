@@ -65,4 +65,26 @@ class LeadDataMapperTest extends TestCase
         $this->assertSame(['+123456789'], $result->phones);
         $this->assertSame(['PHP', 'Laravel'], $result->skills);
     }
+
+    public function test_it_defaults_missing_array_fields_to_empty_arrays(): void
+    {
+        $lead = [
+            'leadscaptain_id' => 'lead-456',
+            'leadscaptain_member_id' => 456,
+            'birth_year' => 1995,
+        ];
+
+        $result = app(LeadDataMapper::class)->map($lead);
+
+        $this->assertSame('456', $result->leadscaptainMemberId);
+        $this->assertSame('1995', $result->birthYear);
+        $this->assertSame([], $result->emails);
+        $this->assertSame([], $result->personalEmails);
+        $this->assertSame([], $result->phones);
+        $this->assertSame([], $result->marvinSearches);
+        $this->assertSame([], $result->skills);
+        $this->assertSame([], $result->languages);
+        $this->assertSame([], $result->schools);
+        $this->assertSame([], $result->externalSearches);
+    }
 }

@@ -291,4 +291,27 @@ public function test_it_rejects_a_response_when_total_pages_is_not_an_integer():
     $client->getLeads();
 }
 
+    public function test_it_rejects_a_response_when_a_lead_is_not_an_array(): void
+    {
+        Http::fake([
+            "*leads*" => Http::response([
+                "total_pages" => 1,
+                "data" => [
+                    [
+                        "leadscaptain_id" => "lead-123",
+                    ],
+                    "invalid-lead",
+                ],
+            ], 200),
+        ]);
+
+        $client = app(LeadscaptainClient::class);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage(
+            "Leadscaptain API returned an invalid response."
+        );
+
+        $client->getLeads();
+    }
 }

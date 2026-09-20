@@ -44,6 +44,7 @@ final class LeadscaptainClient
             !is_array($data)
             || !isset($data['data'])
             || !is_array($data['data'])
+            || array_filter($data['data'], fn ($lead) => !is_array($lead)) !== []
             || !isset($data['total_pages'])
             || !is_int($data['total_pages'])
         ) {
