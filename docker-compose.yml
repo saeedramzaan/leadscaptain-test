@@ -1,0 +1,42 @@
+
+version: "3.3"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: leadscaptain-app
+    working_dir: /var/www
+    volumes:
+      - .:/var/www
+    command: tail -f /dev/null
+    depends_on:
+      - postgres
+
+  worker:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    working_dir: /var/www
+    volumes:
+      - .:/var/www
+    command: php artisan queue:work database --sleep=1 --timeout=70
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:17
+    container_name: leadscaptain-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: leadscaptain
+      POSTGRES_USER: leadscaptain
+      POSTGRES_PASSWORD: leadscaptain_secret
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: leadscaptain
+          POSTGRES_USER: leadscaptain
+          POSTGRES_PASSWORD: leadscaptain_secret
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U leadscaptain -d leadscaptain"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, intl, pdo_pgsql, pgsql, bcmath, zip
+          coverage: none
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Prepare environment
+        run: cp .env.example .env
+
+      - name: Generate application key
+        run: php artisan key:generate
+
+      - name: Run migrations
+        env:
+          DB_CONNECTION: pgsql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 5432
+          DB_DATABASE: leadscaptain
+          DB_USERNAME: leadscaptain
+          DB_PASSWORD: leadscaptain_secret
+          QUEUE_CONNECTION: database
+        run: php artisan migrate --force
+
+      - name: Run tests
+        run: php artisan test
