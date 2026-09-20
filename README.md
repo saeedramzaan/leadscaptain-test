@@ -383,8 +383,8 @@ The test suite covers:
 Current test suite:
 
 ```text
-19 tests passed
-57 assertions
+22 tests passed
+64 assertions
 ```
 
 Most external API behavior is tested using Laravel HTTP fakes, so an API key is not required to run the automated tests.
