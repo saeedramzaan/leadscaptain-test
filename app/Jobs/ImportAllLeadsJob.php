@@ -2,7 +2,7 @@
 
 namespace App\Jobs;
 
-use App\Infrastructure\Leadscaptain\LeadscaptainClient;
+use App\Application\Lead\ImportLeads;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 
@@ -20,17 +20,17 @@ class ImportAllLeadsJob implements ShouldQueue
     ) {
     }
 
-    public function handle(LeadscaptainClient $client): void
+    public function handle(ImportLeads $importLeads): void
     {
-        $response = $client->getLeads(
+        $response = $importLeads->importPage(
             page: 1,
-            limit: $this->limit, // pending pages to be added to the job 
+            limit: $this->limit,
             filters: $this->filters,
         );
 
         $totalPages = (int) ($response['total_pages'] ?? 1);
 
-        for ($page = 1; $page <= $totalPages; $page++) {
+        for ($page = 2; $page <= $totalPages; $page++) {
             ImportLeadsPageJob::dispatch( // // Add this page job to the queue for a worker to execute
                 page: $page,
                 limit: $this->limit,
