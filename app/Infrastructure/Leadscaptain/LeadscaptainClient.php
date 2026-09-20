@@ -13,47 +13,24 @@ final class LeadscaptainClient
         int $limit = 100,
         array $filters = [],
     ): array {
-        // $response = $this->request()
-        //     ->get('/leads', array_merge([
-        //         'page' => $page,
-        //         'limit' => $limit,
-        //     ], $filters));
+        $response = $this->request()
+            ->retry(
+                config('leadscaptain.retry_times'),
+                config('leadscaptain.retry_sleep'),
+                function ($exception, $request) {
+                    if ($exception instanceof \Illuminate\Http\Client\RequestException) {
+                        return $exception->response->tooManyRequests()
+                            || $exception->response->serverError();
+                    }
 
-    //     $response = $this->request()
-    // ->retry(
-    //     config('leadscaptain.retry_times'),
-    //     config('leadscaptain.retry_sleep'),
-    //     function ($exception, $request) {
-    //         return $exception instanceof \Illuminate\Http\Client\RequestException
-    //             && (
-    //                 $exception->response->status() === 429
-    //                 || $exception->response->serverError()
-    //             );
-    //     }
-    // )
-    // ->get('/leads', array_merge([
-    //     'page' => $page,
-    //     'limit' => $limit,
-    // ], $filters));
-
-    $response = $this->request()
-    ->retry(
-        config('leadscaptain.retry_times'),
-        config('leadscaptain.retry_sleep'),
-        function ($exception, $request) {
-            if ($exception instanceof \Illuminate\Http\Client\RequestException) {
-                return $exception->response->tooManyRequests()
-                    || $exception->response->serverError();
-            }
-            
-            return $exception instanceof \Illuminate\Http\Client\ConnectionException;
-        },
-        false
-    )
-    ->get('/leads', array_merge([
-        'page' => $page,
-        'limit' => $limit,
-    ], $filters));
+                    return $exception instanceof \Illuminate\Http\Client\ConnectionException;
+                },
+                false
+            )
+            ->get('/leads', array_merge([
+                'page' => $page,
+                'limit' => $limit,
+            ], $filters));
 
         if ($response->failed()) {
             throw new RuntimeException(
@@ -63,7 +40,13 @@ final class LeadscaptainClient
 
         $data = $response->json();
 
-        if (!is_array($data)) {
+        if (
+            !is_array($data)
+            || !isset($data['data'])
+            || !is_array($data['data'])
+            || !isset($data['total_pages'])
+            || !is_int($data['total_pages'])
+        ) {
             throw new RuntimeException(
                 'Leadscaptain API returned an invalid response.'
             );
@@ -81,6 +64,4 @@ final class LeadscaptainClient
                 'Accept' => 'application/json',
             ]);
     }
-
-    
 }

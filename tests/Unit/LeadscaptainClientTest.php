@@ -95,7 +95,26 @@ class LeadscaptainClientTest extends TestCase
                 && $request->header('X-API-Token')[0] === ''
                 && $request->header('Accept')[0] === 'application/json';
         });
-    } 
+    }
+
+    public function test_it_rejects_a_response_when_data_is_not_an_array(): void
+    {
+    Http::fake([
+        '*leads*' => Http::response([
+            'total_pages' => 1,
+            'data' => 'invalid-data',
+        ], 200),
+    ]);
+
+    $client = app(LeadscaptainClient::class);
+
+    $this->expectException(\RuntimeException::class);
+    $this->expectExceptionMessage(
+        'Leadscaptain API returned an invalid response.'
+    );
+
+    $client->getLeads();
+    }
 
     public function test_it_throws_exception_when_api_returns_server_error(): void
     {
@@ -114,6 +133,7 @@ class LeadscaptainClientTest extends TestCase
     
         $client->getLeads();
     }
+
 
     public function test_it_retries_when_api_temporarily_returns_server_error(): void
     {
@@ -234,26 +254,41 @@ public function test_it_fails_after_retries_are_exhausted(): void
     Http::assertSentCount(6);
 }
 
-//     public function test_it_handles_internal_server_error(): void
-// {
-//     Http::fake([
-//         'https://api.leadscaptain.com/leads*' => Http::response([
-//             'detail' => 'Internal Server Error',
-//         ], 500),
-//     ]);
+public function test_it_rejects_a_response_when_total_pages_is_missing(): void
+{
+    Http::fake([
+        '*leads*' => Http::response([
+            'data' => [],
+        ], 200),
+    ]);
 
-//     $client = app(LeadscaptainClient::class);
+    $client = app(LeadscaptainClient::class);
 
-//     try {
-//         $client->getLeads();
-//     } catch (RuntimeException $exception) {
-//         dump($exception->getMessage());
+    $this->expectException(\RuntimeException::class);
+    $this->expectExceptionMessage(
+        'Leadscaptain API returned an invalid response.'
+    );
 
-//         $this->assertSame(
-//             'Leadscaptain API request failed with status 500.',
-//             $exception->getMessage()
-//         );
-//     }
-// }
+    $client->getLeads();
+}
+
+public function test_it_rejects_a_response_when_total_pages_is_not_an_integer(): void
+{
+    Http::fake([
+        '*leads*' => Http::response([
+            'total_pages' => '10',
+            'data' => [],
+        ], 200),
+    ]);
+
+    $client = app(LeadscaptainClient::class);
+
+    $this->expectException(\RuntimeException::class);
+    $this->expectExceptionMessage(
+        'Leadscaptain API returned an invalid response.'
+    );
+
+    $client->getLeads();
+}
 
 }
