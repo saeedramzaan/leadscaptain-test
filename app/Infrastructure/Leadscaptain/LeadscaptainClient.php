@@ -5,6 +5,7 @@ namespace App\Infrastructure\Leadscaptain;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
+use InvalidArgumentException;
 
 final class LeadscaptainClient
 {
@@ -13,8 +14,17 @@ final class LeadscaptainClient
         int $limit = 100,
         array $filters = [],
     ): array {
+        if ($page < 1) {
+            throw new InvalidArgumentException('Page must be at least 1.');
+        }
+        
+        if ($limit < 1) {
+            throw new InvalidArgumentException('Limit must be at least 1.');
+        }
+
         $response = $this->request()
             ->retry(
+                
                 config('leadscaptain.retry_times'),
                 config('leadscaptain.retry_sleep'),
                 function ($exception, $request) {
@@ -42,7 +52,7 @@ final class LeadscaptainClient
 
         if (
             !is_array($data)
-            || !isset($data['data'])
+            || !isset($data['data'])                                                                                                         
             || !is_array($data['data'])
             || array_filter($data['data'], fn ($lead) => !is_array($lead)) !== []
             || !isset($data['total_pages'])

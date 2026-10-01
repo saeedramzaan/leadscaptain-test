@@ -4,6 +4,7 @@ namespace Tests\Unit;
 
 use App\Infrastructure\Leadscaptain\LeadscaptainClient;
 use Illuminate\Support\Facades\Http;
+use InvalidArgumentException;
 use RuntimeException;
 use Tests\TestCase;
 
@@ -14,7 +15,7 @@ class LeadscaptainClientTest extends TestCase
     {
         Http::fake([
             'https://api.leadscaptain.com/leads*' => Http::response([
-                'data' => [
+                    'data' => [
                     [
                         'key' => 'lv596u',
                         'leadscaptain_public_identifier' => 'public-123',
@@ -91,7 +92,7 @@ class LeadscaptainClientTest extends TestCase
         );
 
         Http::assertSent(function ($request) {
-            return $request->url() === 'https://api.leadscaptain.com/leads?page=1&limit=100'
+             return $request->url() === 'https://api.leadscaptain.com/leads?page=1&limit=100'
                 && $request->header('X-API-Token')[0] === ''
                 && $request->header('Accept')[0] === 'application/json';
         });
@@ -291,8 +292,8 @@ public function test_it_rejects_a_response_when_total_pages_is_not_an_integer():
     $client->getLeads();
 }
 
-    public function test_it_rejects_a_response_when_a_lead_is_not_an_array(): void
-    {
+public function test_it_rejects_a_response_when_a_lead_is_not_an_array(): void
+{
         Http::fake([
             "*leads*" => Http::response([
                 "total_pages" => 1,
@@ -313,5 +314,23 @@ public function test_it_rejects_a_response_when_total_pages_is_not_an_integer():
         );
 
         $client->getLeads();
-    }
+}
+
+public function test_it_rejects_invalid_page(): void
+{
+    $client = app(LeadscaptainClient::class);
+
+    $this->expectException(InvalidArgumentException::class);
+
+    $client->getLeads(page: 0);
+}
+
+public function test_it_rejects_invalid_limit(): void
+{
+    $client = app(LeadscaptainClient::class);
+
+    $this->expectException(InvalidArgumentException::class);
+
+    $client->getLeads(limit: 0);
+}
 }

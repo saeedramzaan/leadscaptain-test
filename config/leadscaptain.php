@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'base_url' => env('LEADSCAPTAIN_API_URL', 'https://api.leadscaptain.com'),
+    'base_url' => env('LEADSCAPTAIN_API_URL', 'https://api.leadscaptain.com'), 
 
     'api_token' => env('LEADSCAPTAIN_API_TOKEN'),
 
